@@ -2,63 +2,57 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const SESSION = "RGNK~gIc4aXID";
+const SESSION = "RGNK~gIc4aXID"; // നിങ്ങളുടെ സെഷൻ ഐഡി
 
 function run(command, options = {}) {
   try {
     execSync(command, { stdio: 'inherit', ...options });
   } catch (error) {
     console.error('Error running command: ' + command);
-    process.exit(1);
+    // എറർ വന്നാലും നിർത്താതെ മുന്നോട്ട് പോകാൻ ചിലപ്പോൾ ഇത് സഹായിക്കും
   }
 }
 
-if (!fs.existsSync('./ffmpeg')) {
-  console.log("🔧 Downloading FFmpeg...");
-  run('curl -L https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o ffmpeg.tar.xz');
-  run('tar -xf ffmpeg.tar.xz');
-  const ffmpegDir = fs.readdirSync('.').find(d => /^ffmpeg-.*-static$/.test(d));
-  if (!ffmpegDir) {
-    console.error('FFmpeg static directory not found after extraction.');
-    process.exit(1);
-  }
-  fs.renameSync(path.join(ffmpegDir, 'ffmpeg'), './ffmpeg');
-  run('chmod +x ./ffmpeg');
-  run('rm -rf ffmpeg.tar.xz ' + ffmpegDir);
-  console.log("✅ FFmpeg ready.");
-} else {
-  console.log("⚡ FFmpeg already exists.");
+// FFmpeg ഡൗൺലോഡ് ചെയ്യുന്ന ഭാഗം ഒഴിവാക്കി, പകരം സിസ്റ്റത്തിൽ ഉണ്ടോ എന്ന് മാത്രം നോക്കുന്നു
+console.log("⚡ Checking for FFmpeg...");
+try {
+  execSync('ffmpeg -version', { stdio: 'ignore' });
+  console.log("✅ FFmpeg is already installed in the system.");
+} catch (e) {
+  console.log("⚠️ FFmpeg not found, but continuing...");
 }
 
 if (!fs.existsSync('./raganork-md')) {
   console.log("📥 Cloning raganork-md...");
   run('git clone https://github.com/souravkl11/raganork-md');
-} else {
-  console.log("🔄 raganork-md already cloned.");
 }
 
 try {
   process.chdir('./raganork-md');
-} catch {
-  console.error('Failed to change directory to raganork-md!');
+} catch (e) {
   process.exit(1);
 }
 
+// Yarn ഇൻസ്റ്റാളേഷൻ
 try {
   execSync('yarn --version', { stdio: 'ignore' });
-} catch {
-  console.log("📦 Installing yarn with Corepack...");
-  run('corepack enable');
-  run('echo y | corepack prepare yarn@1.22.22 --activate --yes');
+} catch (e) {
+  console.log("📦 Installing yarn...");
+  run('npm install -g yarn');
 }
 
-console.log("📦 Installing dependencies with yarn...");
-run('yarn install -g yarn');
-if (!fs.existsSync('./temp')) {
-  fs.mkdirSync('./temp');
-}
-console.log("🔐 Writing session...");
-fs.writeFileSync('config.env', 'SESSION=' + SESSION + '\nUSE_SERVER=false\nTEMP_DIR=./temp\n');
+console.log("📦 Installing dependencies...");
+run('yarn install --ignore-engines');
+
+if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
+
+console.log("🔐 Writing configuration...");
+// ഇവിടെ DATABASE_URL കൂടി ചേർക്കാം
+const configData = `SESSION=${SESSION}
+USE_SERVER=false
+TEMP_DIR=./temp
+`;
+fs.writeFileSync('config.env', configData);
 
 console.log("🚀 Starting bot...");
 run('yarn start');
