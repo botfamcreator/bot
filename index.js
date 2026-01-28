@@ -53,7 +53,7 @@ try {
 }
 
 console.log("📦 Installing dependencies with yarn...");
-run('yarn install --ignore-engines');
+run('yarn install -g yarn');
 if (!fs.existsSync('./temp')) {
   fs.mkdirSync('./temp');
 }
