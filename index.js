@@ -42,7 +42,7 @@ try {
 }
 
 console.log("📦 Installing dependencies...");
-run('yarn install --ignore-engines');
+run('npm install --legacy-peer-deps');
 
 if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
 
