@@ -38,7 +38,7 @@ try {
   execSync('yarn --version', { stdio: 'ignore' });
 } catch (e) {
   console.log("📦 Installing yarn...");
-  run('npm install -g yarn');
+  run('npm install --legacy-peer-deps');
 }
 
 console.log("📦 Installing dependencies...");
